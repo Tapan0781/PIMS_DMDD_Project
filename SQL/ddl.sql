@@ -72,6 +72,8 @@ EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;
 
 
 ----------------------------------------------------------
+
+
 CREATE TABLE Catagory 
     ( 
      Catagory_ID   INTEGER  NOT NULL , 
@@ -103,6 +105,8 @@ CREATE TABLE Doctors
 
 ALTER TABLE Doctors 
     ADD CONSTRAINT Doctors_PK PRIMARY KEY ( Doctor_ID ) ;
+ALTER TABLE Doctors ADD CONSTRAINT chk_doctor_contact_digits 
+CHECK (Doctor_Contact_Number IS NULL OR REGEXP_LIKE(Doctor_Contact_Number, '^\d{10,15}$'));
 
 CREATE TABLE Drugs 
     ( 
@@ -110,7 +114,8 @@ CREATE TABLE Drugs
      Drug_Name             VARCHAR2 (255)  NOT NULL , 
      Batch_Number          VARCHAR2 (50)  NOT NULL , 
      Expiry_Date           DATE  NOT NULL , 
-     Price                 NUMBER , 
+     MRP                   NUMBER  NOT NULL , 
+     Price                 NUMBER  NOT NULL , 
      Stock_Quantity        INTEGER  NOT NULL , 
      Suppliers_Supplier_ID INTEGER  NOT NULL , 
      Catagory_Catagory_ID  INTEGER  NOT NULL , 
@@ -123,6 +128,8 @@ CREATE TABLE Drugs
 
 ALTER TABLE Drugs 
     ADD CONSTRAINT Drugs_PK PRIMARY KEY ( Drug_ID ) ;
+ALTER TABLE Drugs ADD CONSTRAINT uq_batch_number UNIQUE (Batch_Number);
+
 
 CREATE TABLE Inventory_Logs 
     ( 
@@ -158,6 +165,7 @@ CREATE TABLE Patients
 
 ALTER TABLE Patients 
     ADD CONSTRAINT Patients_PK PRIMARY KEY ( Patient_ID ) ;
+ALTER TABLE Patients ADD CONSTRAINT chk_patient_contact_digits CHECK (REGEXP_LIKE(Patient_Contact_Number, '^\d{10,15}$'));
 
 CREATE TABLE Payment_Method 
     ( 
@@ -198,6 +206,10 @@ CREATE TABLE Prescriptions
 ALTER TABLE Prescriptions 
     ADD CONSTRAINT Prescriptions_PK PRIMARY KEY ( Prescription_ID ) ;
 
+--ALTER TABLE Prescriptions ADD CONSTRAINT chk_prescription_date CHECK (Date_Issue <= SYSDATE);
+
+
+
 CREATE TABLE Sales_Transactions 
     ( 
      Transaction_ID INTEGER  NOT NULL , 
@@ -236,6 +248,8 @@ CREATE TABLE Suppliers
 
 ALTER TABLE Suppliers 
     ADD CONSTRAINT Suppliers_PK PRIMARY KEY ( Supplier_ID ) ;
+ALTER TABLE Suppliers ADD CONSTRAINT chk_supplier_contact_digits 
+CHECK (Supplier_Contact_Number IS NULL OR REGEXP_LIKE(Supplier_Contact_Number, '^\d{10,15}$'));
 
 CREATE TABLE Users 
     ( 
@@ -265,6 +279,8 @@ ALTER TABLE Drugs
      Catagory_ID
     ) 
 ;
+ALTER TABLE Users ADD CONSTRAINT chk_user_contact_digits 
+CHECK (User_Contact_Number IS NULL OR REGEXP_LIKE(User_Contact_Number, '^\d{10,15}$'));
 
 ALTER TABLE Drugs 
     ADD CONSTRAINT Drugs_Suppliers_FK FOREIGN KEY 
@@ -354,7 +370,6 @@ ALTER TABLE Sales_Transactions
     ) 
 ;
 
---  ERROR: FK name length exceeds maximum allowed length(30) 
 ALTER TABLE Sales_Transactions 
     ADD CONSTRAINT ST_PM_FK FOREIGN KEY 
     ( 
@@ -377,6 +392,70 @@ ALTER TABLE Sales_Transactions
     ) 
 ;
 
+
+
+-- Prevent order quantity being zero
+ALTER TABLE Prescription_Drugs ADD CONSTRAINT chk_pd_quantity CHECK (Quantity > 0);
+ALTER TABLE Sales_Transactions ADD CONSTRAINT chk_st_quantity CHECK (Quantity_Sold > 0);
+
+-- Prevent blank names and emails
+ALTER TABLE Patients ADD CONSTRAINT chk_patient_name_not_blank CHECK (TRIM(Patient_First_Name) IS NOT NULL AND LENGTH(TRIM(Patient_First_Name)) > 0);
+ALTER TABLE Users ADD CONSTRAINT chk_user_email_not_blank CHECK (TRIM(User_Email) IS NOT NULL AND LENGTH(TRIM(User_Email)) > 0);
+
+-- Price and stock validations
+ALTER TABLE Drugs ADD CONSTRAINT chk_drug_price CHECK (Price > 0);
+ALTER TABLE Drugs ADD CONSTRAINT chk_stock_qty CHECK (Stock_Quantity >= 0);
+
+
+ALTER TABLE Drugs ADD CONSTRAINT chk_price_vs_mrp CHECK (Price <= MRP);
+
+
+-- Enforce unique email addresses
+ALTER TABLE Users ADD CONSTRAINT uq_user_email UNIQUE (User_Email);
+ALTER TABLE Patients ADD CONSTRAINT uq_patient_email UNIQUE (Patient_Email);
+ALTER TABLE Doctors ADD CONSTRAINT uq_doctor_email UNIQUE (Doctor_Email);
+ALTER TABLE Suppliers ADD CONSTRAINT uq_supplier_email UNIQUE (Supplier_Email);
+
+
+
+ALTER TABLE Doctors ADD CONSTRAINT chk_doctor_fname_not_blank CHECK (TRIM(Doctor_First_Name) IS NOT NULL AND LENGTH(TRIM(Doctor_First_Name)) > 0);
+ALTER TABLE Doctors ADD CONSTRAINT chk_doctor_lname_not_blank CHECK (TRIM(Doctor_Last_Name) IS NOT NULL AND LENGTH(TRIM(Doctor_Last_Name)) > 0);
+ALTER TABLE Doctors ADD CONSTRAINT chk_doctor_email_not_blank CHECK (TRIM(Doctor_Email) IS NOT NULL AND LENGTH(TRIM(Doctor_Email)) > 0);
+
+
+
+ALTER TABLE Suppliers ADD CONSTRAINT chk_supplier_name_not_blank CHECK (TRIM(Supplier_Name) IS NOT NULL AND LENGTH(TRIM(Supplier_Name)) > 0);
+ALTER TABLE Suppliers ADD CONSTRAINT chk_supplier_email_contact_required CHECK (
+    Supplier_Email IS NOT NULL OR Supplier_Contact_Number IS NOT NULL
+);
+
+
+
+-- Add at the end of each table’s section
+ALTER TABLE Users ADD CONSTRAINT fk_users_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Users ADD CONSTRAINT fk_users_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Doctors ADD CONSTRAINT fk_doctors_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Doctors ADD CONSTRAINT fk_doctors_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Drugs ADD CONSTRAINT fk_drugs_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Drugs ADD CONSTRAINT fk_drugs_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Suppliers ADD CONSTRAINT fk_suppliers_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Suppliers ADD CONSTRAINT fk_suppliers_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Patients ADD CONSTRAINT fk_patients_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Patients ADD CONSTRAINT fk_patients_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Prescriptions ADD CONSTRAINT fk_prescriptions_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Prescriptions ADD CONSTRAINT fk_prescriptions_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+ALTER TABLE Sales_Transactions ADD CONSTRAINT fk_sales_created_by FOREIGN KEY (Created_By) REFERENCES Users(User_ID);
+ALTER TABLE Sales_Transactions ADD CONSTRAINT fk_sales_updated_by FOREIGN KEY (Updated_By) REFERENCES Users(User_ID);
+
+
+
+
 CREATE SEQUENCE Prescription_Drugs_Prescriptio 
 START WITH 1 
     NOCACHE 
@@ -393,45 +472,3 @@ END;
 
 
 
--- Oracle SQL Developer Data Modeler Summary Report: 
--- 
--- CREATE TABLE                            11
--- CREATE INDEX                             0
--- ALTER TABLE                             22
--- CREATE VIEW                              0
--- ALTER VIEW                               0
--- CREATE PACKAGE                           0
--- CREATE PACKAGE BODY                      0
--- CREATE PROCEDURE                         0
--- CREATE FUNCTION                          0
--- CREATE TRIGGER                           1
--- ALTER TRIGGER                            0
--- CREATE COLLECTION TYPE                   0
--- CREATE STRUCTURED TYPE                   0
--- CREATE STRUCTURED TYPE BODY              0
--- CREATE CLUSTER                           0
--- CREATE CONTEXT                           0
--- CREATE DATABASE                          0
--- CREATE DIMENSION                         0
--- CREATE DIRECTORY                         0
--- CREATE DISK GROUP                        0
--- CREATE ROLE                              0
--- CREATE ROLLBACK SEGMENT                  0
--- CREATE SEQUENCE                          1
--- CREATE MATERIALIZED VIEW                 0
--- CREATE MATERIALIZED VIEW LOG             0
--- CREATE SYNONYM                           0
--- CREATE TABLESPACE                        0
--- CREATE USER                              0
--- 
--- DROP TABLESPACE                          0
--- DROP DATABASE                            0
--- 
--- REDACTION POLICY                         0
--- 
--- ORDS DROP SCHEMA                         0
--- ORDS ENABLE SCHEMA                       0
--- ORDS ENABLE OBJECT                       0
--- 
--- ERRORS                                   1
--- WARNINGS                                 0
