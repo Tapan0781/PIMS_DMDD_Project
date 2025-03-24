@@ -65,4 +65,3 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error creating PHARMACIST_USER: ' || SQLERRM);
 END;
 /
-
