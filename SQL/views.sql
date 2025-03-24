@@ -96,3 +96,13 @@ SELECT
 FROM Drugs
 WHERE Expiry_Date BETWEEN SYSDATE AND SYSDATE + 30
 ORDER BY Expiry_Date;
+
+--9. View: Monthly Sales Report
+CREATE OR REPLACE VIEW Monthly_Sales_Report AS
+SELECT
+    TRUNC(st.DATE_TIMESTAMP, 'MONTH') AS Sales_Month,  -- Corrected column name
+    SUM(st.TOTAL_PRICE) AS Total_Sales_Amount,
+    COUNT(st.TRANSACTION_ID) AS Total_Transactions
+FROM Sales_Transactions st
+GROUP BY TRUNC(st.DATE_TIMESTAMP, 'MONTH')
+ORDER BY Sales_Month DESC;
