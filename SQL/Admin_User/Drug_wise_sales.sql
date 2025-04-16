@@ -1,0 +1,1 @@
+SELECT * FROM Drug_Wise_Sales_Summary ;
