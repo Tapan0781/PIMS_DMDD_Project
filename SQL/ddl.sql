@@ -470,5 +470,12 @@ BEGIN
 END;
 /
 
+UPDATE PRESCRIPTIONS
+SET STATUS = 'Issued'
+WHERE STATUS IS NULL OR STATUS NOT IN ('Issued', 'Dispensed', 'Cancelled', 'Partially Filled', 'Completed');
 
+commit;
 
+ALTER TABLE PRESCRIPTIONS
+ADD CONSTRAINT chk_prescription_status
+CHECK (STATUS IN ('Issued', 'Dispensed', 'Cancelled', 'Partially Filled', 'Completed'));

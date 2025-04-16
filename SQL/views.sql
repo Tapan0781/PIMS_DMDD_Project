@@ -106,3 +106,90 @@ SELECT
 FROM Sales_Transactions st
 GROUP BY TRUNC(st.DATE_TIMESTAMP, 'MONTH')
 ORDER BY Sales_Month DESC;
+
+--10. low stock view
+CREATE OR REPLACE VIEW low_stock_drugs AS
+SELECT 
+  TO_CHAR(drug_id) AS drug_id,
+  drug_name,
+  stock_quantity,
+  expiry_date
+FROM drugs
+WHERE stock_quantity < 10
+
+UNION ALL
+
+SELECT 
+  'N/A' AS drug_id,
+  'No drugs below low stock' AS drug_name,
+  NULL AS stock_quantity,
+  NULL AS expiry_date
+FROM dual
+WHERE NOT EXISTS (
+  SELECT 1 FROM drugs WHERE stock_quantity < 10
+);
+
+--10. Monthly Report
+CREATE OR REPLACE VIEW APP_ADMIN.MONTHLY_SALES_REPORT AS
+SELECT
+  TRUNC(st.DATE_TIMESTAMP, 'MONTH') AS sales_month,
+  SUM(st.TOTAL_PRICE) AS total_sales_amount,
+  COUNT(st.TRANSACTION_ID) AS total_transactions
+FROM SALES_TRANSACTIONS st
+GROUP BY TRUNC(st.DATE_TIMESTAMP, 'MONTH')
+ORDER BY sales_month DESC;
+
+--11. Drug wise sales
+CREATE OR REPLACE VIEW Drug_Wise_Sales_Summary AS
+SELECT
+    d.Drug_ID,
+    d.Drug_Name,
+    SUM(st.Quantity_Sold) AS Total_Quantity_Sold,
+    SUM(st.Total_Price) AS Total_Sales_Amount
+FROM
+    Drugs d
+JOIN
+    Sales_Transactions st ON d.Drug_ID = st.Drugs_Drug_ID
+GROUP BY
+    d.Drug_ID, d.Drug_Name
+ORDER BY
+    Total_Quantity_Sold DESC;
+
+
+-- 1. Check Current Inventory Status
+SELECT * FROM Current_Inventory_Status;
+-- Expect: List of all drugs with stock status ('LOW STOCK' or 'SUFFICIENT')
+
+-- 2. Skip View 2 (Placeholder for Product_Wise_Price_Changes)
+
+-- 3. Total Sales Region-wise
+SELECT * FROM Total_Sales_Region_Wise;
+-- Expect: Supplier city/state with aggregated sales and transaction counts
+
+-- 4. Weekly Sales Report
+SELECT * FROM Week_Wise_Sales;
+-- Expect: Sales grouped by week start date
+
+-- 5. Doctor-wise Prescription Count
+SELECT * FROM Doctor_Prescription_Count;
+-- Expect: List of doctors and how many prescriptions each issued
+
+-- 6. Top-Selling Drugs
+SELECT * FROM Top_Selling_Drugs;
+-- Expect: Drugs sorted by units sold
+
+-- 7. Prescription Summary
+SELECT * FROM Prescription_Summary;
+-- Expect: Each prescription with doctor and patient names, and status
+
+-- 8. Drugs Near Expiry
+SELECT * FROM Drugs_Near_Expiry;
+-- Expect: Drugs that are expiring within the next 30 days
+
+-- 9. Monthly Sales Report
+SELECT * FROM Monthly_Sales_Report;
+-- Expect: Sales grouped by month
+
+-- 10. Low Stock View
+SELECT * FROM low_stock_drugs;
+-- Expect: Drugs with quantity < 10 OR message "No drugs below low stock"
