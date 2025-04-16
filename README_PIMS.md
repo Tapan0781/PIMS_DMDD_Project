@@ -27,13 +27,13 @@ This project implements a role-based Pharmaceutical Inventory Management System 
   └── delete_procedures.sql
 
 /sequences
-  └── prescription_drugs_seq_trigger.sql
+  └── sequence.sql
 
 /triggers
   └── trg_update_audit_files.sql
 
 /functions
-  └── fn_top_selling_drugs.sql
+  └── functions.sql
 ```
 
 ---
@@ -126,13 +126,5 @@ This project implements a role-based Pharmaceutical Inventory Management System 
 
 ---
 
-## 📈 Reports Available
-
-- Top-selling drugs (monthly)
-- Low stock report
-- Drug-wise sales summary
-- Doctor prescription count
-- Region-wise sales aggregation
-- Expired/near-expiry drugs
 
 ---
