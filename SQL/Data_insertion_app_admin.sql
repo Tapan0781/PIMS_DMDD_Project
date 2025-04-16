@@ -85,7 +85,7 @@ INSERT INTO APP_ADMIN.Payment_Method (Payment_ID, Payment_Type) VALUES (2, 'Cred
 INSERT INTO APP_ADMIN.Payment_Method (Payment_ID, Payment_Type) VALUES (3, 'Debit Card');
 INSERT INTO APP_ADMIN.Payment_Method (Payment_ID, Payment_Type) VALUES (4, 'Check');
 
-
+commit;
 
 
 
