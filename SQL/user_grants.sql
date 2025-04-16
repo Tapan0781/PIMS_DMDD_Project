@@ -52,7 +52,18 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error granting procedure privileges: ' || SQLERRM);
 END;
 /
-   
+   BEGIN
+    EXECUTE IMMEDIATE 'GRANT EXECUTE ON APP_ADMIN.PKG_PATIENT_MGMT TO PHARMACIST_USER';
+    EXECUTE IMMEDIATE 'GRANT EXECUTE ON APP_ADMIN.PKG_PRESCRIPTION_MGMT TO PHARMACIST_USER';
+    EXECUTE IMMEDIATE 'GRANT EXECUTE ON APP_ADMIN.PKG_INVENTORY_MANAGEMENT TO PHARMACIST_USER';
+    EXECUTE IMMEDIATE 'GRANT EXECUTE ON APP_ADMIN.PKG_SALES_MGMT TO PHARMACIST_USER';
+    DBMS_OUTPUT.PUT_LINE('Permissions granted to PHARMACIST_USER on allowed packages.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error while granting permissions: ' || SQLERRM);
+END;
+/
+
     
     
     -- View access (wrapped in TRY block to skip if view doesn't exist)
@@ -83,3 +94,18 @@ EXCEPTION
 END;
 /
 
+
+GRANT EXECUTE ON APP_TRANSACTIONS TO PHARMACIST_USER;
+-- Pharmacist can delete prescriptions
+GRANT EXECUTE ON delete_prescription TO PHARMACIST_USER;
+
+-- Pharmacist can delete prescription drugs
+GRANT EXECUTE ON delete_prescription_drug TO PHARMACIST_USER;
+
+-- Pharmacist can delete sales transactions (e.g., in case of refund or error)
+GRANT EXECUTE ON delete_sales_transaction TO PHARMACIST_USER;
+
+-- Pharmacist can delete inventory logs (e.g., corrections)
+GRANT EXECUTE ON delete_inventory_log TO PHARMACIST_USER;
+
+GRANT EXECUTE ON APP_TRANSACTIONS TO PHARMACIST_USER;
